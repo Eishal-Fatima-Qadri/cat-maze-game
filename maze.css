@@ -1,0 +1,53 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f080b8;
+  background-image: url("https://www.transparenttextures.com/patterns/batthern.png");
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: "Quicksand", sans-serif;
+}
+
+.container {
+  background-color: white;
+  padding: 40px 30px;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  width: 600px;
+}
+
+h1 {
+  font-family: "Luckiest Guy", cursive;
+  font-size: 2.5rem;
+  color: #ff69b4;
+  margin-bottom: 20px;
+}
+
+.cat-img {
+  display: block;
+  width: 120px;
+  height: auto;
+  margin: 0 auto 20px;
+}
+
+.start-btn {
+  font-weight: bold;
+  display: block;
+  margin: 0 auto;
+  background-color: #ff69b4;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  width: 120px;
+}
+
+.start-btn:hover {
+  background-color: #ff4da6;
+}
