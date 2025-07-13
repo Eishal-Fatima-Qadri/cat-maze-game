@@ -20,8 +20,8 @@ body {
 }
 
 h1 {
-  font-family: "Luckiest Guy", cursive;
-  font-size: 2.5rem;
+  font-family: "Press Start 2P", cursive;
+  font-size: 2rem;
   color: #ff69b4;
   margin-bottom: 20px;
 }
@@ -34,6 +34,7 @@ h1 {
 }
 
 .start-btn {
+  font-family: "Press Start 2P";
   font-weight: bold;
   display: block;
   margin: 0 auto;
@@ -42,7 +43,7 @@ h1 {
   border: none;
   padding: 12px 24px;
   border-radius: 15px;
-  font-size: 1rem;
+  font-size: 13px;
   cursor: pointer;
   transition: background 0.3s ease;
   width: 120px;
@@ -50,4 +51,22 @@ h1 {
 
 .start-btn:hover {
   background-color: #ff4da6;
+}
+
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-size: 16px;
+  padding: 8px 16px;
+  background-color: #ffccdd;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+}
+
+canvas {
+  border-radius: 10px;
 }
