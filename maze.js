@@ -4,83 +4,164 @@ const canvas = document.getElementById("mazeCanvas");
 const backBtn = document.getElementById("backBtn");
 const ctx = canvas.getContext("2d");
 
+let maze, rows, cols, tileSize;
+
+const catImg = new Image();
+catImg.src = "./assets/catto.png";
+
+const goalImg = new Image();
+goalImg.src = "./assets/cat-food.png";
+
+class Graph {
+  constructor(rows, cols) {
+    this.rows = rows;
+    this.cols = cols;
+    this.nodes = {};
+    this.goal = null;
+  }
+
+  addEdge(r1, c1, r2, c2) {
+    const key1 = `${r1},${c1}`;
+    const key2 = `${r2},${c2}`;
+    if (!this.nodes[key1]) this.nodes[key1] = [];
+    if (!this.nodes[key2]) this.nodes[key2] = [];
+    this.nodes[key1].push([r2, c2]);
+    this.nodes[key2].push([r1, c1]);
+  }
+}
+
+function generateMazeGraph(rows, cols) {
+  const graph = new Graph(rows, cols);
+  const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+  const directions = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+
+  function shuffle(array) {
+    //fisher-yates shuffle algo
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  let lastVisitedCell = null;
+  function dfs(r, c) {
+    visited[r][c] = true;
+    lastVisitedCell = [r, c]; //keep track of last visited cell
+
+    for (const [dr, dc] of shuffle(directions)) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && !visited[nr][nc]) {
+        graph.addEdge(r, c, nr, nc);
+        dfs(nr, nc);
+      }
+    }
+  }
+
+  dfs(0, 0);
+  graph.goal = lastVisitedCell; // attach goal to graph
+  console.log(graph);
+  console.log("Last visited cell:", lastVisitedCell);
+  return graph;
+}
+
+function graphToMaze(graph) {
+  const rows = graph.rows;
+  const cols = graph.cols;
+  const grid = Array.from({ length: rows * 2 + 1 }, () =>
+    Array(cols * 2 + 1).fill(1)
+  );
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cellRow = r * 2 + 1;
+      const cellCol = c * 2 + 1;
+      grid[cellRow][cellCol] = 0;
+
+      const neighbours = graph.nodes[`${r},${c}`] || [];
+      for (const [nr, nc] of neighbours) {
+        const dr = nr - r;
+        const dc = nc - c;
+        grid[cellRow + dr][cellCol + dc] = 0;
+      }
+    }
+  }
+
+  return grid;
+}
+
+let goalCell;
+//---- start button
 startBtn.addEventListener("click", () => {
   container.style.display = "none";
   canvas.style.display = "block";
   backBtn.style.display = "inline-block";
 
-  // wait for cat image before drawing
-  if (catImg.complete) {
+  // generate new maze
+  const mazeGraph = generateMazeGraph(10, 10);
+  maze = graphToMaze(mazeGraph);
+  goalCell = mazeGraph.goal.map((n) => n * 2 + 1);
+
+  if (catImg.complete && goalImg.complete) {
     drawMaze();
   } else {
-    catImg.onload = () => drawMaze();
+    catImg.onload = drawMaze;
+    goalImg.onload = drawMaze;
   }
+
+  rows = maze.length;
+  cols = maze[0].length;
+  tileSize = canvas.width / cols;
 });
 
+//back button
 backBtn.addEventListener("click", () => {
   canvas.style.display = "none";
   backBtn.style.display = "none";
   container.style.display = "block";
 });
 
-const rows = 10;
-const cols = 10;
-const tileSize = canvas.width / cols; // 60
-
-const maze = [
-  [0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
-  [0, 1, 0, 1, 0, 1, 1, 0, 1, 0],
-  [0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
-  [1, 1, 0, 1, 1, 1, 1, 1, 1, 0],
-  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-  [0, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-  [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
-  [0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
-  [0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-  [1, 1, 1, 1, 1, 0, 1, 1, 1, 0],
-];
-
 function drawMaze() {
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      const isWall = maze[row][col] === 1;
-      if (isWall) {
-        ctx.fillStyle = "#cc6699";
-      } else {
-        ctx.fillStyle = "#fff";
-      }
-
+      ctx.fillStyle = maze[row][col] === 1 ? "#cc6699" : "#fff";
       ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
       ctx.strokeStyle = "#fff";
       ctx.strokeRect(col * tileSize, row * tileSize, tileSize, tileSize);
     }
   }
 
+  if (goalCell) {
+    const [goalRow, goalCol] = goalCell;
+    const size = tileSize * 0.8;
+    const offset = (tileSize - size) / 2;
+    ctx.drawImage(
+      goalImg,
+      goalCol * tileSize + offset,
+      goalRow * tileSize + offset,
+      size,
+      size
+    );
+  }
+
   drawPlayer();
 }
 
 let player = {
-  row: 0, //->stored as grid coordinates
-  col: 0,
+  row: 1, // match new maze layout
+  col: 1,
   color: "#000",
 };
 
 function drawPlayer() {
-  //   ctx.fillStyle = player.color;
-  //   ctx.beginPath();
-  //   ctx.arc(
-  //     player.col * tileSize + tileSize / 2, //x // converted to pixels
-  //     player.row * tileSize + tileSize / 2, //y
-  //     tileSize / 3, //radius
-  //     0,
-  //     Math.PI * 2
-  //   );
-  //   ctx.fill();
-
   const x = player.col * tileSize;
   const y = player.row * tileSize;
-
-  //  adjust size
   const catSize = tileSize * 0.9;
   const offset = (tileSize - catSize) / 2;
 
@@ -105,7 +186,6 @@ document.addEventListener("keydown", (e) => {
       break;
   }
 
-  //check for walls and outer boundary
   if (
     newRow >= 0 &&
     newRow < rows &&
@@ -115,51 +195,10 @@ document.addEventListener("keydown", (e) => {
   ) {
     player.row = newRow;
     player.col = newCol;
-    drawMaze(); // re-draw maze and player
+    drawMaze();
+  }
+
+  if (player.row === goalCell[0] && player.col === goalCell[1]) {
+    setTimeout(() => alert("You found the cat food! 🐾"), 100);
   }
 });
-
-const catImg = new Image();
-catImg.src = "./assets/catto.png";
-
-//graph implementation
-function CreateGraph(maze) {
-  let graph = [];
-  let rows = maze.length;
-  let cols = maze[0].length;
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < cols; j++) {
-      if (maze[i][j] === 0) {
-        const key = `${i}-${j}`;
-        graph[key] = [];
-
-        const directions = [
-          [-1, 0], // up
-          [1, 0], // down
-          [0, -1], // left
-          [0, 1], // right
-        ];
-
-        for (const [dr, dc] of directions) {
-          const newRow = i + dr;
-          const newCol = j + dc;
-
-          if (
-            newRow >= 0 &&
-            newRow < rows &&
-            newCol >= 0 &&
-            newCol < cols &&
-            maze[newRow][newCol] === 0
-          ) {
-            graph[key].push(`${newRow}-${newCol}`);
-          }
-        }
-      }
-    }
-  }
-
-  console.log(graph);
-  return graph;
-}
-
-CreateGraph(maze);
