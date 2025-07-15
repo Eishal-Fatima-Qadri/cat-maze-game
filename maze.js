@@ -24,7 +24,7 @@ class Graph {
   addEdge(r1, c1, r2, c2) {
     const key1 = `${r1},${c1}`;
     const key2 = `${r2},${c2}`;
-    if (!this.nodes[key1]) this.nodes[key1] = [];
+    if (!this.nodes[key1]) this.nodes[key1] = []; //incase the nodes do not exist
     if (!this.nodes[key2]) this.nodes[key2] = [];
     this.nodes[key1].push([r2, c2]);
     this.nodes[key2].push([r1, c1]);
