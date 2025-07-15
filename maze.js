@@ -2,16 +2,17 @@ const startBtn = document.querySelector(".start-btn");
 const container = document.querySelector(".container");
 const canvas = document.getElementById("mazeCanvas");
 const backBtn = document.getElementById("backBtn");
+const regenBtn = document.getElementById("regenBtn");
 const ctx = canvas.getContext("2d");
 
 let maze, rows, cols, tileSize;
-
 const catImg = new Image();
 catImg.src = "./assets/catto.png";
 
 const goalImg = new Image();
 goalImg.src = "./assets/cat-food.png";
 
+// ------------------ graph class -------------------
 class Graph {
   constructor(rows, cols) {
     this.rows = rows;
@@ -30,14 +31,15 @@ class Graph {
   }
 }
 
+// -------------------generate maze with a graph -------------------
 function generateMazeGraph(rows, cols) {
   const graph = new Graph(rows, cols);
   const visited = Array.from({ length: rows }, () => Array(cols).fill(false));
   const directions = [
-    [-1, 0],
-    [1, 0],
-    [0, -1],
-    [0, 1],
+    [-1, 0], //up
+    [1, 0], //down
+    [0, -1], //left
+    [0, 1], //right
   ];
 
   function shuffle(array) {
@@ -50,6 +52,7 @@ function generateMazeGraph(rows, cols) {
   }
 
   let lastVisitedCell = null;
+  // --------------------------------- recursive DFS function ----------------------------------
   function dfs(r, c) {
     visited[r][c] = true;
     lastVisitedCell = [r, c]; //keep track of last visited cell
@@ -96,28 +99,9 @@ function graphToMaze(graph) {
   return grid;
 }
 
-let goalCell;
-//---- start button
-startBtn.addEventListener("click", () => {
-  container.style.display = "none";
-  canvas.style.display = "block";
-  backBtn.style.display = "inline-block";
-
-  // generate new maze
-  const mazeGraph = generateMazeGraph(10, 10);
-  maze = graphToMaze(mazeGraph);
-  goalCell = mazeGraph.goal.map((n) => n * 2 + 1);
-
-  if (catImg.complete && goalImg.complete) {
-    drawMaze();
-  } else {
-    catImg.onload = drawMaze;
-    goalImg.onload = drawMaze;
-  }
-
-  rows = maze.length;
-  cols = maze[0].length;
-  tileSize = canvas.width / cols;
+//regenerate button
+regenBtn.addEventListener("click", () => {
+  initMaze(); // reset the maze
 });
 
 //back button
@@ -125,8 +109,29 @@ backBtn.addEventListener("click", () => {
   canvas.style.display = "none";
   backBtn.style.display = "none";
   container.style.display = "block";
+  steps = 0;
+  document.getElementById("scoreBox").textContent = `Score: ${steps}`;
+  document.getElementById("scoreBox").style.display = "none";
+  regenBtn.style.display = "none";
+  player.col = 1;
+  player.row = 1;
 });
 
+let goalCell;
+//---- start button
+startBtn.addEventListener("click", () => {
+  document.getElementById("scoreBox").textContent = `Score: ${steps}`;
+  document.getElementById("scoreBox").style.display = "block";
+
+  container.style.display = "none";
+  canvas.style.display = "block";
+  backBtn.style.display = "inline-block";
+  regenBtn.style.display = "inline-block";
+
+  initMaze();
+});
+
+//-------------------------------- drawing maze logic ----------------------------------
 function drawMaze() {
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
@@ -168,6 +173,8 @@ function drawPlayer() {
   ctx.drawImage(catImg, x + offset, y + offset, catSize, catSize);
 }
 
+// ----------------------------------- movement logic ------------------------------------
+let steps = 0;
 document.addEventListener("keydown", (e) => {
   let newRow = player.row;
   let newCol = player.col;
@@ -195,6 +202,9 @@ document.addEventListener("keydown", (e) => {
   ) {
     player.row = newRow;
     player.col = newCol;
+    steps++;
+    document.getElementById("scoreBox").textContent = `Score: ${steps}`;
+
     drawMaze();
   }
 
@@ -202,3 +212,30 @@ document.addEventListener("keydown", (e) => {
     setTimeout(() => alert("You found the cat food! 🐾"), 100);
   }
 });
+
+// --------------------------- initialize maze ---------------------------------
+function initMaze() {
+  steps = 0;
+  document.getElementById("scoreBox").textContent = `Score: ${steps}`;
+
+  // generate new maze
+  const mazeGraph = generateMazeGraph(10, 10);
+  maze = graphToMaze(mazeGraph);
+  goalCell = mazeGraph.goal.map((n) => n * 2 + 1);
+
+  rows = maze.length;
+  cols = maze[0].length;
+  tileSize = canvas.width / cols;
+
+  player.row = 1;
+  player.col = 1;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // clear previous maze
+
+  if (catImg.complete && goalImg.complete) {
+    drawMaze();
+  } else {
+    catImg.onload = drawMaze;
+    goalImg.onload = drawMaze;
+  }
+}
